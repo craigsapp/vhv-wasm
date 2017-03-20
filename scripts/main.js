@@ -39,7 +39,7 @@ var RestoreCursorNote;
 
 // Increment BasketVersion when the verovio toolkit is updated, or
 // the Midi player software or soundfont is updated.
-var BasketVersion = 200;
+var BasketVersion = 205;
 
 var Actiontime = 0;
 
@@ -1538,14 +1538,26 @@ function reloadData() {
 // downloadVerovioToolkit --
 //
 
-function downloadVerovioToolkit(url) {
-	basket.require({url: url, expire: 500, unique: BasketVersion})
-		.then(function() { initializeVerovioToolkit(); },
-				function() { console.log("There was an error loading script", url)
-		});
+
+function downloadVerovioToolkit(url1, url2) {
+console.log("DOWNLOADING\n", url1, "\nthen\n", url2, "\nBASKETVERSION", BasketVersion);
+	basket
+		.require(
+			{url: url1, key: 'verovio-script.js', expire: 500, unique: BasketVersion, execute: false, skipCache: false}
+		).then(function () { 
+			console.log("GOT HERE 2");
+			basket
+				.require(
+					{url: url2, key: 'verovio.wasm', expire: 500, unique: BasketVersion, execute: false, skipCache: false}
+				).then(
+					function () { console.log("GOT HERE 3"); initializeVerovioToolkit(); },
+					function () { console.log("There was an error loading scripts", url1, url2)}
+				);
+		}, function() { console.log("ERROR with loading", url1);} );
 }
 
 
+var Module = {};
 
 //////////////////////////////
 //
@@ -1553,7 +1565,14 @@ function downloadVerovioToolkit(url) {
 //
 
 function initializeVerovioToolkit() {
-	// console.log("Verovio toolkit being initialized.");
+	console.log("Verovio toolkit being initialized.");
+	var script = document.createElement('script');
+	script.setAttribute('type', 'text/javascript');
+	Module.wasmBinary = basket.get('verovio.wasm');
+console.log("WASM", Module.wasmBinary);
+	script.textContent = basket.get('verovio-script.js');
+console.log("SCRIPT CONTENT", script.textContent);
+	document.body.appendChild(script);
 
 	vrvToolkit = new verovio.toolkit();
 
